@@ -4,8 +4,8 @@ spring:
 
   cloud:
     config.server.git:
-      uri: https://github.com/MjayK18/lovable-config-server
-      username: MjayK18
+      uri: https://github.com/MjayK-18/lovable-config-server
+      username: MjayK-18
       password:
       default-label: master
 
@@ -29,7 +29,7 @@ spring:
     discovery:
       enabled: false
     config.server.git:
-      uri: https://github.com/MjayK18/lovable-config-server
+      uri: https://github.com/MjayK-18/lovable-config-server
       username: ${GIT_USERNAME}
       password: ${GIT_PASSWORD}
 
