@@ -5,8 +5,8 @@ on:
     branches:
       - main
       - master
-    paths:
-      - 'config-service/**'
+#    paths:
+#      - 'config-service/**'
 
 env:
   SERVICE_NAME: config-service
