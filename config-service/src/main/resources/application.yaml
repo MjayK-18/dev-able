@@ -7,7 +7,7 @@ spring:
       uri: https://github.com/MjayK-18/lovable-config-server
       username: MjayK-18
       password:
-      default-label: master
+      default-label: main
 
 server.port: 8888
 
