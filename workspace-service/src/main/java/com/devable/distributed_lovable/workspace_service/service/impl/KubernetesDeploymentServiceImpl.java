@@ -40,20 +40,29 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
 
     public DeployResponse deploy(Long projectId) {
         // Dynamically build the domain: project-123.app.domain.com
+        log.info("========== ENTERED DEPLOY SERVICE ==========");
+
         String domain = "project-" + projectId + "." + baseDomain;
+        log.info("domain :" + domain);
 
         // Use default port 80 format logic for clean URLs, or explicit ports for local testing
         String formattedUrl = proxyPort.equals("80")
                 ? "http://" + domain
                 : "http://" + domain + ":" + proxyPort;
 
+        log.info("Preview Url : " + formattedUrl);
+
         Pod existingPod = findActivePod(projectId);
+
+        log.info("Existing Pod : {}", existingPod);
 
         if (existingPod != null) {
             log.info("Found existing pod {} for project {}. Resuming...", existingPod.getMetadata().getName(), projectId);
             registerRoute(domain, existingPod);
             return new DeployResponse(formattedUrl);
         }
+
+        log.info("Claiming new pod");
 
         return claimAndStartNewPod(projectId, domain, formattedUrl);
     }
@@ -69,6 +78,8 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
     }
 
     private DeployResponse claimAndStartNewPod(Long projectId, String domain, String formattedUrl) {
+        log.info("Step 1 - Searching idle pod");
+
         Pod pod = client.pods().inNamespace(namespace)
                 .withLabel(POOL_LABEL, IDLE)
                 .list().getItems().stream()
@@ -77,6 +88,7 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
 
         String podName = pod.getMetadata().getName();
         log.info("Claiming pod {} for project {}", podName, projectId);
+        log.info("Step 2 - Idle pod found : {}", podName);
 
         client.pods().inNamespace(namespace).withName(podName).edit(p -> {
             p.getMetadata().getLabels().put(POOL_LABEL, BUSY);
@@ -87,12 +99,16 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
         try {
             String initialSyncCmd = String.format("rm -rf /app/* && mc mirror --overwrite myminio/projects/%d/ /app/", projectId);
             execCommand(podName, "syncer", "sh", "-c", initialSyncCmd);
+            log.info("Step 3 - Starting initial sync");
 
             String watchCmd = String.format("nohup mc mirror --overwrite --watch myminio/projects/%d/ /app/ > /app/sync.log 2>&1 &", projectId);
             execCommand(podName, "syncer", "sh", "-c", watchCmd);
+            log.info("Step 4 - Initial sync completed");
 
             String startCmd = "npm install && nohup npm run dev -- --host 0.0.0.0 --port 5173 > /app/dev.log 2>&1 &";
             execCommand(podName, "runner", "sh", "-c", startCmd);
+            log.info("Step 5 - Starting watcher");
+            log.info("Step 6 - Starting npm");
 
             Pod updatedPod = client.pods().inNamespace(namespace).withName(podName).get();
             registerRoute(domain, updatedPod);

@@ -50,6 +50,7 @@ public class ProjectController {
 
     @PostMapping("/{id}/deploy")
     public ResponseEntity<DeployResponse> deployProject(@PathVariable Long id) {
+        System.out.println("Request came for deploy project " + id);
         return ResponseEntity.ok(deploymentService.deploy(id));
     }
 

@@ -3,7 +3,7 @@ name: Deploy Account Service
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'account-service/**'
 
@@ -38,7 +38,6 @@ jobs:
       - name: Make Maven Wrapper Executable
         working-directory: ./${{ env.SERVICE_NAME }}
         run: chmod +x mvnw
-
 
       - name: Build and Push Docker Image with Jib
         working-directory: ./${{ env.SERVICE_NAME }}
